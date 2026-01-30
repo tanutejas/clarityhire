@@ -1,5 +1,4 @@
 module.exports = async function handler(req, res) {
-
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -15,58 +14,127 @@ module.exports = async function handler(req, res) {
   const { resume, jd } = req.body;
 
   try {
+    /* ===============================
+       PROMPT — EXTRACTION ONLY
+       (NOT scoring)
+    =============================== */
 
     const prompt = `
-You are an ATS resume scoring engine.
+You are a resume parser.
 
-STRICTLY RETURN JSON ONLY.
-NO TEXT.
-NO EXPLANATION OUTSIDE JSON.
+Return ONLY valid JSON.
 
-Format MUST be:
+Extract:
 
 {
-  "scores": {
-    "skills": number,
-    "experience": number,
-    "keywords": number,
-    "seniority": number,
-    "education": number,
-    "overall": number
-  },
-  "hireRecommendation": "Strong Yes | Maybe | No",
-  "explanation": "short reason"
+  "requiredSkills": string[],
+  "candidateSkills": string[],
+  "yearsRequired": number,
+  "yearsCandidate": number,
+  "educationMatch": boolean,
+  "missingCriticalSkills": string[],
+  "suggestions": string[]
 }
-
-Score harshly.
 
 Resume:
 ${resume}
 
-JD:
+Job Description:
 ${jd}
 `;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.2
-      })
-    });
+    /* ===============================
+       CALL OPENAI (JSON MODE)
+    =============================== */
+
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+
+          // ⭐ CRITICAL → forces pure JSON
+          response_format: { type: "json_object" },
+
+          messages: [
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.1
+        }),
+      }
+    );
 
     const data = await response.json();
 
-    const parsed = JSON.parse(data.choices[0].message.content);
+    const ai = JSON.parse(data.choices[0].message.content);
 
-    res.status(200).json(parsed);
+    /* ===============================
+       DETERMINISTIC SCORING (YOU CONTROL)
+    =============================== */
+
+    const required = ai.requiredSkills || [];
+    const candidate = ai.candidateSkills || [];
+
+    const matched = candidate.filter(s =>
+      required.some(r =>
+        r.toLowerCase().includes(s.toLowerCase())
+      )
+    );
+
+    const skillsScore = required.length
+      ? Math.round((matched.length / required.length) * 100)
+      : 0;
+
+    const expScore =
+      ai.yearsRequired > 0
+        ? Math.min(
+            Math.round(
+              (ai.yearsCandidate / ai.yearsRequired) * 100
+            ),
+            100
+          )
+        : 100;
+
+    const educationScore = ai.educationMatch ? 100 : 40;
+
+    const overall = Math.round(
+      skillsScore * 0.6 +
+      expScore * 0.3 +
+      educationScore * 0.1
+    );
+
+    /* ===============================
+       VERDICT
+    =============================== */
+
+    let hireRecommendation = "No";
+
+    if (overall >= 80) hireRecommendation = "Strong Yes";
+    else if (overall >= 55) hireRecommendation = "Maybe";
+
+    /* ===============================
+       FINAL RESPONSE
+    =============================== */
+
+    res.status(200).json({
+      scores: {
+        skills: skillsScore,
+        experience: expScore,
+        keywords: skillsScore,
+        seniority: expScore,
+        education: educationScore,
+        overall
+      },
+      hireRecommendation,
+      missingCriticalSkills: ai.missingCriticalSkills || [],
+      suggestions: ai.suggestions || [],
+      explanation: `${matched.length}/${required.length} skills matched`
+    });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

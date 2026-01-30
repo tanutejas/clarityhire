@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 export default function App() {
@@ -7,10 +6,13 @@ export default function App() {
   const [jd, setJd] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [score, setScore] = useState(0);
+  const [shortlisted, setShortlisted] = useState(false);
 
   async function analyze() {
     setLoading(true);
     setResult(null);
+    setShortlisted(false);
 
     const res = await fetch("https://clarityhire-pearl.vercel.app/api/analyze", {
       method: "POST",
@@ -23,15 +25,52 @@ export default function App() {
     setLoading(false);
   }
 
-  const score = result?.scores?.overall ?? 0;
+  /* score animation */
+  useEffect(() => {
+    if (!result) return;
+
+    const target = result?.scores?.overall ?? 0;
+    let i = 0;
+
+    const timer = setInterval(() => {
+      i += 2;
+      if (i >= target) {
+        i = target;
+        clearInterval(timer);
+      }
+      setScore(i);
+    }, 15);
+
+    return () => clearInterval(timer);
+  }, [result]);
+
+  const scores = result?.scores || {};
+
+  /* simple resume parsing for profile */
+  const name = resume.split("\n")[0] || "Candidate";
+  const yearsMatch = resume.match(/(\d+)\s*years?/i);
+  const years = yearsMatch ? yearsMatch[1] : "—";
+
+  const skills =
+    resume
+      .match(/skills[\s\S]*?\n/i)?.[0]
+      ?.replace(/skills/i, "")
+      ?.split(",")
+      ?.slice(0, 4)
+      ?.join(", ") || "Not detected";
+
+  const verdict = result?.hireRecommendation || "—";
+  const suggestions =
+    result?.missingCriticalSkills?.map(
+      (s) => `Add or highlight ${s} experience`
+    ) || [];
 
   return (
     <div className="app">
-
       <div className="card">
 
         <h1>ClarityHire</h1>
-        <p className="subtitle">AI Resume Intelligence</p>
+        <p className="subtitle">AI Hiring Copilot</p>
 
         <textarea
           placeholder="Paste Resume"
@@ -50,87 +89,74 @@ export default function App() {
         </button>
 
         {result && (
-          <motion.div
-            className="dashboard"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="dashboard">
 
-            {/* BIG APPLE RING */}
-            <ScoreRing score={score} />
-
-            {/* BARS */}
-            <Bar label="Skills" value={result.scores.skills} />
-            <Bar label="Experience" value={result.scores.experience} />
-            <Bar label="Keywords" value={result.scores.keywords} />
-            <Bar label="Seniority" value={result.scores.seniority} />
-            <Bar label="Education" value={result.scores.education} />
-
-            <div className="verdict">
-              <h3>{result.hireRecommendation}</h3>
-              <p>{result.explanation}</p>
+            {/* PROFILE */}
+            <div className="profileCard">
+              <h3>{name}</h3>
+              <p>{years} years experience</p>
+              <p className="muted">{skills}</p>
             </div>
 
-          </motion.div>
-        )}
+            {/* VERDICT */}
+            <div className={`verdict ${verdict.toLowerCase().replace(" ", "")}`}>
+              {verdict}
+            </div>
 
+            {/* RING */}
+            <div
+              className="ring"
+              style={{
+                background: `conic-gradient(#4f46e5 ${score}%, rgba(255,255,255,0.08) ${score}%)`
+              }}
+            >
+              {score}%
+            </div>
+
+            {/* BARS */}
+            <Bar label="Skills" value={scores.skills} />
+            <Bar label="Experience" value={scores.experience} />
+            <Bar label="Keywords" value={scores.keywords} />
+            <Bar label="Seniority" value={scores.seniority} />
+            <Bar label="Education" value={scores.education} />
+
+            {/* SHORTLIST */}
+            <button
+              className={`shortlistBtn ${shortlisted ? "active" : ""}`}
+              onClick={() => setShortlisted(true)}
+            >
+              ⭐ {shortlisted ? "Shortlisted" : "Add to Shortlist"}
+            </button>
+
+            {/* SUGGESTIONS */}
+            {suggestions.length > 0 && (
+              <div className="section">
+                <h4>Suggestions to Improve Match</h4>
+                <ul>
+                  {suggestions.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-
-
-/* =======================
-   Components
-======================= */
-
-function ScoreRing({ score }) {
-
-  let color = "#ef4444";
-  if (score >= 75) color = "#22c55e";
-  else if (score >= 50) color = "#f59e0b";
-
-  return (
-    <div className="ringWrap">
-
-      <motion.div
-        className="ring"
-        style={{
-          background: `conic-gradient(${color} ${score}%, #222 ${score}%)`
-        }}
-        initial={{ rotate: -90 }}
-        animate={{ rotate: 0 }}
-        transition={{ duration: 1 }}
-      >
-        <span>{score}%</span>
-      </motion.div>
-
-      <p className="ringLabel">Overall Match</p>
-    </div>
-  );
-}
-
-
-
-function Bar({ label, value }) {
+function Bar({ label, value = 0 }) {
   return (
     <div className="barRow">
-
       <div className="barLabel">
         {label}
         <span>{value}%</span>
       </div>
-
       <div className="barBg">
-        <motion.div
-          className="barFill"
-          initial={{ width: 0 }}
-          animate={{ width: value + "%" }}
-          transition={{ duration: 0.8 }}
-        />
+        <div className="barFill" style={{ width: value + "%" }} />
       </div>
-
     </div>
   );
 }
