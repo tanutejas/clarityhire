@@ -1,6 +1,5 @@
 module.exports = async function handler(req, res) {
 
-  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -16,6 +15,38 @@ module.exports = async function handler(req, res) {
   const { resume, jd } = req.body;
 
   try {
+
+    const prompt = `
+You are an ATS resume scoring engine.
+
+STRICTLY RETURN JSON ONLY.
+NO TEXT.
+NO EXPLANATION OUTSIDE JSON.
+
+Format MUST be:
+
+{
+  "scores": {
+    "skills": number,
+    "experience": number,
+    "keywords": number,
+    "seniority": number,
+    "education": number,
+    "overall": number
+  },
+  "hireRecommendation": "Strong Yes | Maybe | No",
+  "explanation": "short reason"
+}
+
+Score harshly.
+
+Resume:
+${resume}
+
+JD:
+${jd}
+`;
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -25,16 +56,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          {
-            role: "system",
-            content: `
-You are an ATS engine.
-Return STRICT JSON.
-
-Resume: ${resume}
-JD: ${jd}
-`
-          }
+          { role: "user", content: prompt }
         ],
         temperature: 0.2
       })
