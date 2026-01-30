@@ -27,25 +27,36 @@ async function analyze() {
 
   results.sort((a,b)=> b.score - a.score);
 
-  renderTable(results, output);
+  renderResults(results, output);
 }
 
-function renderTable(results, output) {
+
+function renderResults(results, output) {
+
   output.innerHTML = `
-    <h2 style="margin-bottom:20px">Candidate Ranking</h2>
+    <h2 style="margin-bottom:25px">Candidate Ranking</h2>
+
     <table style="width:100%; border-collapse:collapse">
-      <tr>
-        <th>Name</th>
-        <th>Score</th>
-        <th>Decision</th>
+      <tr style="text-align:left;border-bottom:1px solid #333">
+        <th style="padding:10px">Resume</th>
+        <th style="padding:10px">Score</th>
+        <th style="padding:10px">Decision</th>
       </tr>
+
       ${results.map(r => `
-        <tr>
-          <td>${r.name}</td>
-          <td>${r.score}%</td>
-          <td>${r.recommendation}</td>
+        <tr style="${rowColor(r.score)} border-bottom:1px solid #222">
+          <td style="padding:10px">${r.name}</td>
+          <td style="padding:10px">${r.score}%</td>
+          <td style="padding:10px">${r.recommendation}</td>
         </tr>
       `).join("")}
     </table>
   `;
+}
+
+
+function rowColor(score){
+  if(score >= 75) return "background:#10291b";
+  if(score >= 50) return "background:#2a220f";
+  return "background:#2a1212";
 }
