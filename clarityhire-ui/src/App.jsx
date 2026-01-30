@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import "./App.css";
 
 export default function App() {
@@ -6,48 +7,31 @@ export default function App() {
   const [jd, setJd] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   async function analyze() {
     setLoading(true);
-    setError("");
     setResult(null);
 
-    try {
-      const res = await fetch("https://clarityhire-pearl.vercel.app/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jd }),
-      });
+    const res = await fetch("https://clarityhire-pearl.vercel.app/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume, jd }),
+    });
 
-      const data = await res.json();
-
-      if (!data.scores) {
-        throw new Error(JSON.stringify(data));
-      }
-
-      setResult(data);
-
-    } catch (e) {
-      setError(e.message);
-    }
-
+    const data = await res.json();
+    setResult(data);
     setLoading(false);
   }
 
-  // 🔥 SAFE VALUES
   const score = result?.scores?.overall ?? 0;
-  const skills = result?.scores?.skills ?? 0;
-  const experience = result?.scores?.experience ?? 0;
-  const keywords = result?.scores?.keywords ?? 0;
-  const seniority = result?.scores?.seniority ?? 0;
-  const education = result?.scores?.education ?? 0;
 
   return (
     <div className="app">
+
       <div className="card">
 
         <h1>ClarityHire</h1>
+        <p className="subtitle">AI Resume Intelligence</p>
 
         <textarea
           placeholder="Paste Resume"
@@ -65,30 +49,29 @@ export default function App() {
           {loading ? "Analyzing..." : "Analyze Resume"}
         </button>
 
-        {error && (
-          <div style={{color:"red", marginTop:20}}>
-            {error}
-          </div>
-        )}
-
         {result && (
-          <div className="output">
+          <motion.div
+            className="dashboard"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
 
-            <h2>Overall Score: {score}%</h2>
+            {/* BIG APPLE RING */}
+            <ScoreRing score={score} />
 
-            <Bar label="Skills" value={skills} />
-            <Bar label="Experience" value={experience} />
-            <Bar label="Keywords" value={keywords} />
-            <Bar label="Seniority" value={seniority} />
-            <Bar label="Education" value={education} />
+            {/* BARS */}
+            <Bar label="Skills" value={result.scores.skills} />
+            <Bar label="Experience" value={result.scores.experience} />
+            <Bar label="Keywords" value={result.scores.keywords} />
+            <Bar label="Seniority" value={result.scores.seniority} />
+            <Bar label="Education" value={result.scores.education} />
 
-            <p style={{marginTop:20}}>
-              {result.hireRecommendation}
-            </p>
+            <div className="verdict">
+              <h3>{result.hireRecommendation}</h3>
+              <p>{result.explanation}</p>
+            </div>
 
-            <p>{result.explanation}</p>
-
-          </div>
+          </motion.div>
         )}
 
       </div>
@@ -96,19 +79,58 @@ export default function App() {
   );
 }
 
+
+
+/* =======================
+   Components
+======================= */
+
+function ScoreRing({ score }) {
+
+  let color = "#ef4444";
+  if (score >= 75) color = "#22c55e";
+  else if (score >= 50) color = "#f59e0b";
+
+  return (
+    <div className="ringWrap">
+
+      <motion.div
+        className="ring"
+        style={{
+          background: `conic-gradient(${color} ${score}%, #222 ${score}%)`
+        }}
+        initial={{ rotate: -90 }}
+        animate={{ rotate: 0 }}
+        transition={{ duration: 1 }}
+      >
+        <span>{score}%</span>
+      </motion.div>
+
+      <p className="ringLabel">Overall Match</p>
+    </div>
+  );
+}
+
+
+
 function Bar({ label, value }) {
   return (
-    <div style={{margin:"10px 0"}}>
-      <div>{label}</div>
-      <div style={{background:"#333", height:8, borderRadius:6}}>
-        <div
-          style={{
-            width: value + "%",
-            height:"100%",
-            background:"linear-gradient(90deg,#6cf,#8a5cff)"
-          }}
+    <div className="barRow">
+
+      <div className="barLabel">
+        {label}
+        <span>{value}%</span>
+      </div>
+
+      <div className="barBg">
+        <motion.div
+          className="barFill"
+          initial={{ width: 0 }}
+          animate={{ width: value + "%" }}
+          transition={{ duration: 0.8 }}
         />
       </div>
+
     </div>
   );
 }

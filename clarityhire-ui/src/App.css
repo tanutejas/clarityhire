@@ -15,33 +15,38 @@ body {
 
 .app {
   width: 100%;
-  max-width: 800px;
+  max-width: 820px;
 }
 
 .card {
   padding: 50px;
-  border-radius: 28px;
-  backdrop-filter: blur(40px);
+  border-radius: 30px;
+
   background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(40px);
+
   border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
 }
 
 h1 {
   margin: 0;
+  font-size: 28px;
 }
 
 .subtitle {
-  margin-bottom: 30px;
   color: #aaa;
+  margin-bottom: 30px;
 }
 
 textarea {
   width: 100%;
-  height: 140px;
+  height: 130px;
   margin-bottom: 18px;
   border-radius: 16px;
   padding: 16px;
+
   border: 1px solid #222;
   background: #14141b;
   color: white;
@@ -52,45 +57,73 @@ button {
   padding: 16px;
   border-radius: 40px;
   border: none;
-  cursor: pointer;
+
   font-weight: 600;
+  cursor: pointer;
+
   background: linear-gradient(135deg,#6cf,#8a5cff);
 }
 
-.output {
+/* ================= DASHBOARD ================= */
+
+.dashboard {
   margin-top: 40px;
 }
 
+/* RING */
+.ringWrap {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
 .ring {
-  width: 150px;
-  height: 150px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
-  margin: 20px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+  margin: auto;
 
-.ring span {
-  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
   font-weight: bold;
+
+  box-shadow: 0 0 30px rgba(108,207,255,0.25);
 }
 
+.ringLabel {
+  margin-top: 12px;
+  color: #aaa;
+}
+
+/* BARS */
 .barRow {
-  margin: 12px 0;
+  margin-bottom: 18px;
 }
 
-.bar {
-  height: 8px;
-  background: #333;
-  border-radius: 6px;
+.barLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #bbb;
 }
 
-.fill {
+.barBg {
+  height: 10px;
+  background: #222;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barFill {
   height: 100%;
   background: linear-gradient(90deg,#6cf,#8a5cff);
 }
 
+/* verdict */
 .verdict {
-  margin-top: 25px;
+  margin-top: 30px;
+  color: #ccc;
 }
