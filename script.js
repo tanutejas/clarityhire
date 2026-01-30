@@ -8,7 +8,7 @@ async function analyze() {
 
   let results = [];
 
-  // If pasted resume exists
+  // pasted resume
   if (resumeText.trim().length > 0) {
     const res = await fetch("/api/analyze", {
       method: "POST",
@@ -25,7 +25,7 @@ async function analyze() {
     });
   }
 
-  // If files uploaded
+  // uploaded files
   for (let file of files) {
     const text = await file.text();
 
@@ -44,7 +44,6 @@ async function analyze() {
     });
   }
 
-  // Nothing provided
   if (results.length === 0) {
     output.innerHTML = "Please paste resume or upload files.";
     return;
@@ -52,5 +51,22 @@ async function analyze() {
 
   results.sort((a,b)=> b.score - a.score);
 
-  renderResults(results, output);
+  // render directly (NO external function to avoid bugs)
+  output.innerHTML = `
+    <h2>Candidate Ranking</h2>
+    <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+      <tr>
+        <th style="text-align:left">Resume</th>
+        <th>Score</th>
+        <th>Decision</th>
+      </tr>
+      ${results.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.score}%</td>
+          <td>${r.recommendation}</td>
+        </tr>
+      `).join("")}
+    </table>
+  `;
 }
