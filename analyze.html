@@ -2,29 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Analyze Resume — ClarityHire</title>
+  <title>ClarityHire — Resume Intelligence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<nav class="nav">
-  <div class="logo">ClarityHire</div>
-</nav>
+<div class="nav">ClarityHire</div>
 
 <section class="analyze">
+
   <h2>Resume Intelligence Engine</h2>
 
   <input type="file" id="files" multiple accept=".txt" />
 
-  <textarea id="resume" placeholder="Paste Resume Here"></textarea>
-  <textarea id="jd" placeholder="Paste Job Description Here"></textarea>
+  <textarea id="resume" placeholder="Paste Resume Here (optional)"></textarea>
+
+  <textarea id="jd" placeholder="Paste Job Description"></textarea>
 
   <button onclick="analyze()">Analyze Resume</button>
 
-  <!-- SINGLE output container only -->
   <div id="output" class="output"></div>
+
 </section>
 
 <script src="script.js"></script>
