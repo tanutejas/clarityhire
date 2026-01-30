@@ -2,32 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ClarityHire — Resume Intelligence</title>
+  <title>ClarityHire</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<div class="nav">ClarityHire</div>
+<div class="app">
 
-<section class="analyze">
+  <header class="header">
+    <div class="logo">ClarityHire</div>
+    <div class="tag">AI Resume Intelligence</div>
+  </header>
 
-  <h2>Resume Intelligence Engine</h2>
+  <main class="card">
 
-  <input type="file" id="files" multiple accept=".txt" />
+    <h1>Resume Screening</h1>
+    <p class="subtitle">Instant ATS scoring & smart candidate ranking</p>
 
-  <textarea id="resume" placeholder="Paste Resume (optional)"></textarea>
+    <input type="file" id="files" multiple accept=".txt" />
 
-  <textarea id="jd" placeholder="Paste Job Description"></textarea>
+    <textarea id="resume" placeholder="Paste resume (optional)"></textarea>
+    <textarea id="jd" placeholder="Paste job description"></textarea>
 
-  <button onclick="analyze()">Analyze Resume</button>
+    <button onclick="analyze()">Analyze</button>
 
-  <div id="output" class="output"></div>
+    <div id="output" class="output"></div>
 
-</section>
+  </main>
+
+</div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
