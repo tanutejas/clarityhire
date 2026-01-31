@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd clarityhire-ui && npm install && npm run build",
+  "outputDirectory": "clarityhire-ui/dist",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
