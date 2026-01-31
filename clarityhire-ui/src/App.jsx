@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./App.css";
 
 export default function App() {
@@ -7,19 +7,41 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  /* ================= ANALYZE ================= */
+
   async function analyze() {
+    if (!resume || !jd) {
+      alert("Paste resume + JD first");
+      return;
+    }
+
     setLoading(true);
 
-    const res = await fetch("https://clarityhire-pearl.vercel.app/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume, jd })
-    });
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume, jd })
+      });
 
-    const data = await res.json();
-    setResult(data);
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      alert("API error");
+      console.error(err);
+    }
 
-    setTimeout(() => setLoading(false), 1000);
+    setLoading(false);
+  }
+
+  /* ================= FILE UPLOAD ================= */
+
+  async function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const text = await file.text(); // simple + guaranteed working
+    setResume(text);
   }
 
   const scores = result?.scores || {};
@@ -27,16 +49,18 @@ export default function App() {
   return (
     <div className="page">
 
-      {loading && <LoadingOverlay />}
-
-      {/* INPUT CARD */}
       <div className="card">
 
-        <h1>Resume Copilot</h1>
-        <p className="sub">Upload or paste your resume</p>
+        <h1>ClarityHire</h1>
+        <p className="sub">AI Resume Analyzer</p>
+
+        <label className="upload">
+          Upload Resume (.txt)
+          <input type="file" accept=".txt" hidden onChange={handleFile}/>
+        </label>
 
         <textarea
-          placeholder="Paste resume here"
+          placeholder="Paste resume"
           value={resume}
           onChange={(e) => setResume(e.target.value)}
         />
@@ -47,25 +71,25 @@ export default function App() {
           onChange={(e) => setJd(e.target.value)}
         />
 
-        <button onClick={analyze}>Analyze Resume</button>
+        <button onClick={analyze}>
+          {loading ? "Analyzing..." : "Analyze Resume"}
+        </button>
       </div>
 
-
-      {/* RESULTS */}
       {result && (
         <div className="dashboard">
 
-          <ScoreRing value={scores.overall || 0} />
+          <div
+            className="ring"
+            style={{
+              background: `conic-gradient(#6ea8ff ${scores.overall}%, rgba(255,255,255,.08) ${scores.overall}%)`
+            }}
+          >
+            {scores.overall}%
+          </div>
 
-          <Glass title="Suggestions">
-            <List items={result.suggestions} />
-          </Glass>
-
-          <Glass title="Interview Questions">
-            <List items={result.interviewQuestions} />
-          </Glass>
-
-          <RewriteSection bullets={result.improvedBullets} />
+          <Section title="Suggestions" items={result.suggestions} />
+          <Section title="Interview Questions" items={result.interviewQuestions} />
 
         </div>
       )}
@@ -74,76 +98,15 @@ export default function App() {
   );
 }
 
-
-/* ================= COMPONENTS ================= */
-
-function ScoreRing({ value }) {
-  return (
-    <div
-      className="ring"
-      style={{
-        background: `conic-gradient(#6ea8ff ${value}%, rgba(255,255,255,.08) ${value}%)`
-      }}
-    >
-      {value}%
-    </div>
-  );
-}
-
-function Glass({ title, children }) {
+/* small helper */
+function Section({ title, items = [] }) {
   return (
     <div className="glass">
       <h3>{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function List({ items = [] }) {
-  return (
-    <ul>
-      {items?.map((i, idx) => <li key={idx}>{i}</li>)}
-    </ul>
-  );
-}
-
-
-/* ===== 🔥 BULLET REWRITE SECTION ===== */
-
-function RewriteSection({ bullets = [] }) {
-
-  if (!bullets?.length) return null;
-
-  return (
-    <div className="glass rewrite">
-
-      <h3>AI Resume Improvements</h3>
-
-      {bullets.map((b, i) => (
-        <div key={i} className="rewriteRow">
-
-          <div className="before">
-            ❌ {b.before}
-          </div>
-
-          <div className="after">
-            ✅ {b.after}
-          </div>
-
-        </div>
-      ))}
-
-    </div>
-  );
-}
-
-
-/* ===== LOADING ===== */
-
-function LoadingOverlay() {
-  return (
-    <div className="loadingOverlay">
-      <div className="loadingCard">Analyzing your resume…</div>
+      {items.length === 0 && <p className="muted">None</p>}
+      <ul>
+        {items.map((t, i) => <li key={i}>{t}</li>)}
+      </ul>
     </div>
   );
 }
